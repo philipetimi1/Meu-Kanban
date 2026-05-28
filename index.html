@@ -25,7 +25,7 @@
             --text-muted: #b0b0b0;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -36,7 +36,7 @@
             overflow: hidden;
         }
 
-        /* --- SIDEBAR (RECOLHIDA) --- */
+        /* --- SIDEBAR (INICIA RECOLHIDA) --- */
         .sidebar {
             width: 70px;
             background-color: var(--bg-sidebar);
@@ -69,7 +69,7 @@
             border: 1px solid #ddd; border-radius: 8px;
             background: var(--bg-body); color: var(--text-main); font-size: 16px;
         }
-        .btn-add { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; }
+        .btn-add { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         /* --- COLUNAS --- */
         .kanban-board { display: flex; flex-direction: column; gap: 12px; }
@@ -84,33 +84,32 @@
             box-shadow: var(--shadow); border-left: 4px solid var(--accent-color);
             position: relative; touch-action: none;
         }
-        .card.is-dragging { opacity: 0.5; transform: scale(0.95); }
-        .card-ghost { position: fixed; pointer-events: none; z-index: 9999; width: 250px; opacity: 0.9; box-shadow: 0 10px 20px rgba(0,0,0,0.3); transform: rotate(3deg); background: var(--bg-card); padding: 10px; border-radius: 10px; }
+        .card.is-dragging { opacity: 0.3; }
+        .card-ghost { 
+            position: fixed; pointer-events: none; z-index: 9999; 
+            width: 250px; opacity: 0.9; box-shadow: 0 10px 20px rgba(0,0,0,0.3); 
+            background: var(--bg-card); padding: 10px; border-radius: 10px; border-left: 4px solid var(--accent-color);
+        }
         .card h4 { font-size: 0.95rem; margin-bottom: 3px; }
         .card p { font-size: 0.8rem; color: var(--text-muted); }
         .date-badge { font-size: 0.6rem; display: block; opacity: 0.7; margin-top: 2px; }
 
-        /* --- CHECKLIST (DETALHES) --- */
-        .checklist-container { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
+        /* --- CHECKLIST --- */
         .checklist-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .checklist-item input[type="checkbox"] { width: 18px; height: 18px; }
-        .checklist-text { font-size: 0.9rem; transition: 0.2s; }
+        .checklist-text { font-size: 0.9rem; }
         .checklist-text.completed { text-decoration: line-through; color: var(--text-muted); opacity: 0.6; }
         .step-input-group { display: flex; gap: 5px; margin-bottom: 15px; }
-        .step-input-group input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ddd; }
+        .step-input-group input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #ddd; background: var(--bg-body); color: var(--text-main); }
 
-        /* --- LISTAS (DETALHES E CONCLUÍDOS) --- */
+        /* --- ACORDEÃO --- */
         .accordion-item { background: var(--bg-card); border-radius: 10px; margin-bottom: 8px; overflow: hidden; box-shadow: var(--shadow); }
-        .accordion-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .accordion-body { padding: 0; max-height: 0; transition: 0.3s; background: var(--bg-body); overflow: hidden; }
+        .accordion-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .accordion-body { padding: 0; max-height: 0; transition: 0.3s ease-out; background: var(--bg-body); overflow: hidden; }
         .accordion-item.open .accordion-body { padding: 15px; max-height: 1000px; overflow-y: auto; }
 
-        /* --- UTILS --- */
-        .btn-small { padding: 5px 10px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.75rem; }
-        .btn-reset { background: #e67e22; color: white; }
-        .btn-hide { background: #95a5a6; color: white; margin-top: 5px; width: 100%; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        .modal { background: var(--bg-card); padding: 20px; border-radius: 15px; width: 85%; max-width: 300px; }
+        .btn-small { padding: 6px 12px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
+        .btn-reset { background: #e67e22; color: white; width: 100%; margin-top: 10px; }
+        .btn-hide { background: #95a5a6; color: white; margin-top: 8px; width: 100%; }
     </style>
 </head>
 <body>
@@ -124,7 +123,7 @@
     </aside>
 
     <main class="main-content">
-        <!-- ABA ACOMPANHAMENTO -->
+        <!-- ACOMPANHAMENTO -->
         <section id="kanban-view" class="view-section active">
             <form class="task-form" id="taskForm">
                 <input type="text" id="taskName" placeholder="Nome da Atividade" required>
@@ -134,65 +133,73 @@
 
             <div class="kanban-board">
                 <div class="column" id="col-Espera" data-status="Espera">
-                    <div class="column-header"><div class="column-title">📋 Espera</div><button onclick="toggleColumn('Espera')" class="toggle-btn">▲</button></div>
+                    <div class="column-header"><b>📋 Espera</b><button onclick="toggleCol('Espera')" class="t-btn">▲</button></div>
                     <div class="card-container"></div>
                 </div>
                 <div class="column" id="col-Andamento" data-status="Andamento">
-                    <div class="column-header"><div class="column-title">⏳ Andamento</div><button onclick="toggleColumn('Andamento')" class="toggle-btn">▲</button></div>
+                    <div class="column-header"><b>⏳ Andamento</b><button onclick="toggleCol('Andamento')" class="t-btn">▲</button></div>
                     <div class="card-container"></div>
                 </div>
                 <div class="column" id="col-Validacao" data-status="Validacao">
-                    <div class="column-header"><div class="column-title">👁️ Validação</div><button onclick="toggleColumn('Validacao')" class="toggle-btn">▲</button></div>
+                    <div class="column-header"><b>👁️ Validação</b><button onclick="toggleCol('Validacao')" class="t-btn">▲</button></div>
                     <div class="card-container"></div>
                 </div>
                 <div class="column" id="col-Concluido" data-status="Concluido">
-                    <div class="column-header"><div class="column-title">✅ Concluído</div><button onclick="toggleColumn('Concluido')" class="toggle-btn">▲</button></div>
+                    <div class="column-header"><b>✅ Concluído</b><button onclick="toggleCol('Concluido')" class="t-btn">▲</button></div>
                     <div class="card-container"></div>
                 </div>
             </div>
         </section>
 
-        <!-- ABA DETALHES -->
+        <!-- DETALHES -->
         <section id="list-view" class="view-section">
-            <h3 style="margin-bottom:15px">Etapas e Detalhes</h3>
+            <h3 style="margin-bottom:15px">Etapas e Checklists</h3>
             <div id="accordionList"></div>
         </section>
 
-        <!-- ABA CONCLUÍDAS -->
+        <!-- CONCLUÍDAS -->
         <section id="done-view" class="view-section">
-            <h3 style="margin-bottom:15px">Histórico de Concluídas</h3>
+            <h3 style="margin-bottom:15px">Histórico Finalizado</h3>
             <div id="doneList"></div>
         </section>
     </main>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('k_tasks_v4')) || [];
-        let theme = localStorage.getItem('k_theme') || 'light';
-        let collapsedCols = JSON.parse(localStorage.getItem('k_collapsed')) || [];
+        // --- ESTADO ---
+        let tasks = JSON.parse(localStorage.getItem('k_v5_data')) || [];
+        let theme = localStorage.getItem('k_v5_theme') || 'light';
+        let collapsedCols = JSON.parse(localStorage.getItem('k_v5_cols')) || [];
 
+        // --- INICIALIZAÇÃO ---
         function init() {
             if (theme === 'dark') document.body.classList.add('dark-theme');
             renderKanban();
+            collapsedCols.forEach(id => {
+                const el = document.getElementById('col-' + id);
+                if(el) { el.classList.add('collapsed'); el.querySelector('.t-btn').innerText = '▼'; }
+            });
         }
+
+        function save() { localStorage.setItem('k_v5_data', JSON.stringify(tasks)); }
 
         // --- NAVEGAÇÃO ---
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('expanded'); }
         function toggleTheme() {
             document.body.classList.toggle('dark-theme');
             theme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
-            localStorage.setItem('k_theme', theme);
+            localStorage.setItem('k_v5_theme', theme);
         }
         function switchView(v) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(v + '-view').classList.add('active');
             document.getElementById('nav-' + v).classList.add('active');
+            if(v === 'kanban') renderKanban();
             if(v === 'list') renderDetails();
             if(v === 'done') renderDone();
-            if(v === 'kanban') renderKanban();
         }
 
-        // --- LÓGICA DE TAREFAS ---
+        // --- TAREFAS ---
         document.getElementById('taskForm').onsubmit = function(e) {
             e.preventDefault();
             const t = {
@@ -202,95 +209,124 @@
                 status: 'Espera',
                 notes: '',
                 checklist: [],
-                hiddenOnBoard: false,
-                dateCreated: new Date().toLocaleString('pt-BR'),
-                dateStarted: null, dateValidated: null, dateFinished: null
+                hidden: false,
+                dateC: new Date().toLocaleString('pt-BR'),
+                dateS: null, dateV: null, dateF: null
             };
-            tasks.push(t);
-            save(); renderKanban(); this.reset();
+            tasks.push(t); save(); renderKanban(); this.reset();
         };
 
-        function save() { localStorage.setItem('k_tasks_v4', JSON.stringify(tasks)); }
-
-        // --- RENDER ACOMPANHAMENTO (KANBAN) ---
         function renderKanban() {
             document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
             tasks.forEach(t => {
-                if (t.status === 'Concluido' && t.hiddenOnBoard) return;
-
+                if (t.status === 'Concluido' && t.hidden) return;
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.id = t.id;
                 card.innerHTML = `
                     <h4>${t.name}</h4>
                     <p>👤 ${t.req}</p>
-                    <span class="date-badge">📅 ${t.dateCreated}</span>
-                    ${t.status === 'Concluido' ? `<button class="btn-small btn-hide" onclick="hideFromBoard('${t.id}')">Ocultar do Quadro</button>` : ''}
+                    <span class="date-badge">📅 ${t.dateC}</span>
+                    ${t.status === 'Concluido' ? `<button class="btn-small btn-hide" onclick="hideTask('${t.id}')">Ocultar do Quadro</button>` : ''}
                 `;
-                setupTouchEvents(card);
-                const container = document.querySelector(`#col-${t.status} .card-container`);
-                if (container) container.appendChild(card);
+                setupDrag(card);
+                const col = document.querySelector('#col-' + t.status + ' .card-container');
+                if(col) col.appendChild(card);
             });
         }
 
-        function hideFromBoard(id) {
-            tasks.find(t => t.id === id).hiddenOnBoard = true;
+        function hideTask(id) { tasks.find(t => t.id === id).hidden = true; save(); renderKanban(); }
+
+        // --- DRAG AND DROP (TOUCH) ---
+        let ghost = null;
+        function setupDrag(card) {
+            card.ontouchstart = function(e) {
+                if(e.target.tagName === 'BUTTON') return;
+                const touch = e.touches[0];
+                ghost = card.cloneNode(true);
+                ghost.className = 'card-ghost';
+                ghost.style.width = card.offsetWidth + 'px';
+                document.body.appendChild(ghost);
+                card.classList.add('is-dragging');
+                moveGhost(touch.clientX, touch.clientY);
+            };
+            card.ontouchmove = function(e) {
+                if(!ghost) return;
+                e.preventDefault();
+                moveGhost(e.touches[0].clientX, e.touches[0].clientY);
+            };
+            card.ontouchend = function(e) {
+                if(!ghost) return;
+                const touch = e.changedTouches[0];
+                // Remove ghost temporariamente para detectar o que está embaixo
+                ghost.style.display = 'none';
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                const col = target?.closest('.column');
+                ghost.style.display = 'block';
+
+                if(col) moveLogic(card.id, col.dataset.status);
+                
+                document.body.removeChild(ghost);
+                ghost = null;
+                card.classList.remove('is-dragging');
+            };
+        }
+        function moveGhost(x, y) { ghost.style.left = (x - 50) + 'px'; ghost.style.top = (y - 50) + 'px'; }
+
+        function moveLogic(id, newStatus) {
+            const t = tasks.find(x => x.id === id);
+            const now = new Date().toLocaleString('pt-BR');
+            if(newStatus === 'Andamento' && !t.dateS) t.dateS = now;
+            if(newStatus === 'Validacao') t.dateV = now;
+            if(newStatus === 'Concluido') { t.dateF = now; t.hidden = false; }
+            t.status = newStatus;
             save(); renderKanban();
         }
 
-        // --- RENDER DETALHES (CHECKLIST) ---
+        // --- DETALHES (CHECKLIST) ---
         function renderDetails() {
             const cont = document.getElementById('accordionList');
             cont.innerHTML = '';
-            // Filtra apenas as que NÃO estão concluídas para focar no trabalho
             tasks.filter(t => t.status !== 'Concluido').forEach(t => {
                 const item = document.createElement('div');
                 item.className = 'accordion-item';
                 item.innerHTML = `
                     <div class="accordion-header" onclick="this.parentElement.classList.toggle('open')">
-                        <span><b>${t.name}</b></span>
-                        <span>${t.status} ▾</span>
+                        <b>${t.name}</b><span>${t.status} ▾</span>
                     </div>
                     <div class="accordion-body">
                         <div class="step-input-group">
-                            <input type="text" id="step-${t.id}" placeholder="Nova etapa...">
-                            <button class="btn-small" style="background:var(--accent-color);color:white" onclick="addStep('${t.id}')">+</button>
+                            <input type="text" id="in-${t.id}" placeholder="Nova etapa...">
+                            <button class="btn-small" style="background:#3498db;color:white" onclick="addStep('${t.id}')">+</button>
                         </div>
-                        <div class="checklist-container" id="check-cont-${t.id}">
-                            ${renderChecklist(t)}
-                        </div>
-                        <textarea style="width:100%;height:60px;margin-top:15px;padding:8px;border-radius:5px" onchange="updateNotes('${t.id}', this.value)" placeholder="Notas gerais...">${t.notes}</textarea>
+                        <div id="list-${t.id}">${renderSteps(t)}</div>
+                        <textarea style="width:100%;height:60px;margin-top:10px;padding:8px" onchange="upNotes('${t.id}', this.value)" placeholder="Notas...">${t.notes}</textarea>
                     </div>
                 `;
                 cont.appendChild(item);
             });
         }
 
-        function renderChecklist(task) {
-            return task.checklist.map((step, index) => `
+        function renderSteps(t) {
+            return t.checklist.map((s, i) => `
                 <div class="checklist-item">
-                    <input type="checkbox" ${step.done ? 'checked' : ''} onchange="toggleStep('${task.id}', ${index})">
-                    <span class="checklist-text ${step.done ? 'completed' : ''}">${step.text}</span>
+                    <input type="checkbox" ${s.done?'checked':''} onchange="togStep('${t.id}',${i})">
+                    <span class="checklist-text ${s.done?'completed':''}">${s.text}</span>
                 </div>
             `).join('');
         }
 
         function addStep(id) {
-            const input = document.getElementById('step-' + id);
-            if (!input.value) return;
-            tasks.find(t => t.id === id).checklist.push({ text: input.value, done: false });
-            input.value = ''; save(); renderDetails();
+            const inp = document.getElementById('in-' + id);
+            if(!inp.value) return;
+            tasks.find(t => t.id === id).checklist.push({text: inp.value, done: false});
+            inp.value = ''; save(); renderDetails();
         }
 
-        function toggleStep(taskId, stepIndex) {
-            const task = tasks.find(t => t.id === taskId);
-            task.checklist[stepIndex].done = !task.checklist[stepIndex].done;
-            save(); renderDetails();
-        }
+        function togStep(tid, i) { tasks.find(t => t.id === tid).checklist[i].done = !tasks.find(t => t.id === tid).checklist[i].done; save(); renderDetails(); }
+        function upNotes(id, v) { tasks.find(t => t.id === id).notes = v; save(); }
 
-        function updateNotes(id, val) { tasks.find(t => t.id === id).notes = val; save(); }
-
-        // --- RENDER CONCLUÍDAS ---
+        // --- CONCLUÍDAS ---
         function renderDone() {
             const cont = document.getElementById('doneList');
             cont.innerHTML = '';
@@ -299,17 +335,13 @@
                 item.className = 'accordion-item';
                 item.innerHTML = `
                     <div class="accordion-header" onclick="this.parentElement.classList.toggle('open')">
-                        <span>✅ ${t.name}</span>
-                        <small>${t.dateFinished}</small>
+                        <b>✅ ${t.name}</b><small>${t.dateF}</small>
                     </div>
                     <div class="accordion-body">
                         <p><small>Solicitante: ${t.req}</small></p>
-                        <p><small>Criado em: ${t.dateCreated}</small></p>
-                        <p><small>Finalizado em: ${t.dateFinished}</small></p>
-                        <div style="margin:10px 0; padding:10px; background:#eee; border-radius:5px; font-size:0.8rem">
-                            <b>Notas:</b> ${t.notes || 'Sem notas.'}
-                        </div>
-                        <button class="btn-small btn-reset" onclick="resetTask('${t.id}')">Reiniciar Fluxo (Voltar para Espera)</button>
+                        <p><small>Início: ${t.dateS || 'N/A'} | Validação: ${t.dateV || 'N/A'}</small></p>
+                        <div style="background:#eee;padding:10px;margin:10px 0;border-radius:5px;font-size:0.8rem">${t.notes || 'Sem notas.'}</div>
+                        <button class="btn-small btn-reset" onclick="resetTask('${t.id}')">Reiniciar Fluxo</button>
                     </div>
                 `;
                 cont.appendChild(item);
@@ -317,4 +349,20 @@
         }
 
         function resetTask(id) {
-            const t = tasks.find(
+            const t = tasks.find(x => x.id === id);
+            t.status = 'Espera'; t.hidden = false; t.dateS = t.dateV = t.dateF = null;
+            save(); switchView('kanban');
+        }
+
+        function toggleCol(id) {
+            const el = document.getElementById('col-' + id);
+            const isC = el.classList.toggle('collapsed');
+            el.querySelector('.t-btn').innerText = isC ? '▼' : '▲';
+            if(isC) collapsedCols.push(id); else collapsedCols = collapsedCols.filter(x => x !== id);
+            localStorage.setItem('k_v5_cols', JSON.stringify(collapsedCols));
+        }
+
+        init();
+    </script>
+</body>
+</html>
