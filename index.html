@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kanban Pro - Gestão Total</title>
+    <title>Kanban Pro - Versão Final</title>
     <style>
         :root {
             --bg-body: #f0f2f5;
@@ -29,7 +29,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
 
-        /* SIDEBAR (INICIA RECOLHIDA) */
+        /* SIDEBAR */
         .sidebar { width: 70px; background: var(--bg-sidebar); display: flex; flex-direction: column; align-items: center; padding: 20px 0; transition: width 0.3s; z-index: 100; }
         .sidebar.expanded { width: 190px; align-items: flex-start; }
         .nav-item { width: 100%; padding: 20px; color: #cbd5e0; display: flex; align-items: center; gap: 15px; cursor: pointer; border: none; background: none; font-size: 1rem; }
@@ -64,7 +64,7 @@
 
         .ghost { position: fixed; pointer-events: none; z-index: 9999; opacity: 0.9; background: var(--bg-card); padding: 12px; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); border-left: 4px solid var(--accent); }
 
-        /* ACORDEÃO (DETALHES E CONCLUÍDAS) */
+        /* ACORDEÃO */
         .acc-item { background: var(--bg-card); border-radius: 10px; margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
         .acc-head { padding: 15px; display: flex; justify-content: space-between; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .acc-body { padding: 0; max-height: 0; transition: max-height 0.3s ease-in-out; background: rgba(0,0,0,0.02); overflow: hidden; }
@@ -86,10 +86,10 @@
         <button class="nav-item" id="btn-details" onclick="app.view('details')">📝 <span>Detalhes</span></button>
         <button class="nav-item" id="btn-done" onclick="app.view('done')">✅ <span>Concluídas</span></button>
         <button class="nav-item" onclick="app.toggleTheme()" style="margin-top: auto;">🌙 <span>Tema</span></button>
+        <button class="nav-item" onclick="app.exportData()" style="font-size: 0.7rem;">💾 <span>Backup</span></button>
     </nav>
 
     <main class="content">
-        <!-- PÁGINA: ACOMPANHAMENTO -->
         <section id="page-kanban" class="page active">
             <div class="card-form">
                 <input type="text" id="in-name" placeholder="Nome da Atividade">
@@ -116,13 +116,11 @@
             </div>
         </section>
 
-        <!-- PÁGINA: DETALHES -->
         <section id="page-details" class="page">
             <h3 style="margin-bottom:15px">Checklist e Etapas</h3>
             <div id="list-details"></div>
         </section>
 
-        <!-- PÁGINA: CONCLUÍDAS -->
         <section id="page-done" class="page">
             <h3 style="margin-bottom:15px">Histórico de Concluídas</h3>
             <div id="list-done"></div>
@@ -131,17 +129,19 @@
 
     <script>
         const app = {
+            // CHAVE PERMANENTE - NUNCA MAIS MUDAR
+            STORAGE_KEY: 'KANBAN_ULTIMATE_DATA',
             tasks: [],
             theme: 'light',
             collapsed: [],
-            openDetailId: null, // Memoriza qual acordeão está aberto
+            openDetailId: null,
             ghost: null,
 
             init: function() {
                 try {
-                    this.tasks = JSON.parse(localStorage.getItem('kanban_v8_tasks')) || [];
-                    this.theme = localStorage.getItem('kanban_v8_theme') || 'light';
-                    this.collapsed = JSON.parse(localStorage.getItem('kanban_v8_cols')) || [];
+                    this.tasks = JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || [];
+                    this.theme = localStorage.getItem('kanban_theme_pref') || 'light';
+                    this.collapsed = JSON.parse(localStorage.getItem('kanban_cols_pref')) || [];
                 } catch(e) { this.tasks = []; }
 
                 if(this.theme === 'dark') document.body.classList.add('dark-theme');
@@ -149,9 +149,14 @@
             },
 
             save: function() {
-                localStorage.setItem('kanban_v8_tasks', JSON.stringify(this.tasks));
-                localStorage.setItem('kanban_v8_theme', this.theme);
-                localStorage.setItem('kanban_v8_cols', JSON.stringify(this.collapsed));
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.tasks));
+                localStorage.setItem('kanban_theme_pref', this.theme);
+                localStorage.setItem('kanban_cols_pref', JSON.stringify(this.collapsed));
+            },
+
+            exportData: function() {
+                const data = JSON.stringify(this.tasks);
+                prompt("Copie seu backup e guarde em um lugar seguro:", data);
             },
 
             view: function(v) {
@@ -173,16 +178,13 @@
             toggleCol: function(id) {
                 const el = document.getElementById('col-' + id);
                 el.classList.toggle('collapsed');
-                const isCollapsed = el.classList.contains('collapsed');
-                if(isCollapsed) this.collapsed.push(id);
-                else this.collapsed = this.collapsed.filter(c => c !== id);
                 this.save();
             },
 
             addTask: function() {
                 const name = document.getElementById('in-name').value;
                 const req = document.getElementById('in-req').value;
-                if(!name || !req) return alert('Preencha os campos');
+                if(!name || !req) return;
 
                 this.tasks.push({
                     id: 'id' + Date.now(),
@@ -223,7 +225,7 @@
                         </div>
                     `;
                     if(t.status === 'Concluido') {
-                        card.innerHTML += `<button class="btn-action" style="background:#95a5a6;color:white;width:100%;margin-top:8px" onclick="app.hideTask('${t.id}')">Ocultar do Quadro</button>`;
+                        card.innerHTML += `<button class="btn-action" style="background:#95a5a6;color:white;width:100%;margin-top:8px" onclick="app.hideTask('${t.id}')">Ocultar</button>`;
                     }
                     this.setupDrag(card, t.id);
                     const col = document.querySelector('#col-' + t.status + ' .items');
@@ -281,7 +283,6 @@
                 this.save(); this.render();
             },
 
-            // --- LÓGICA DE DETALHES COM MEMÓRIA DE ESTADO ---
             renderDetails: function() {
                 const cont = document.getElementById('list-details');
                 cont.innerHTML = '';
@@ -296,7 +297,7 @@
                                 <button class="btn-action" style="background:var(--accent);color:white" onclick="app.addStep('${t.id}')">Add</button>
                             </div>
                             <div id="steps-${t.id}">${this.renderSteps(t)}</div>
-                            <textarea style="width:100%;height:60px;margin-top:10px;padding:8px;border-radius:8px;border:1px solid #ddd;background:var(--bg-body);color:var(--text-main)" onchange="app.upNotes('${t.id}', this.value)" placeholder="Notas gerais...">${t.notes}</textarea>
+                            <textarea style="width:100%;height:60px;margin-top:10px;padding:8px;border-radius:8px;border:1px solid #ddd;background:var(--bg-body);color:var(--text-main)" onchange="app.upNotes('${t.id}', this.value)" placeholder="Notas...">${t.notes}</textarea>
                         </div>
                     `;
                     cont.appendChild(div);
@@ -304,7 +305,6 @@
             },
 
             toggleAccordion: function(id) {
-                // Se clicar no que já está aberto, fecha. Se não, abre o novo.
                 this.openDetailId = (this.openDetailId === id) ? null : id;
                 this.renderDetails();
             },
@@ -322,15 +322,13 @@
                 const inp = document.getElementById('step-' + id);
                 if(!inp.value) return;
                 this.tasks.find(t => t.id === id).checklist.push({text: inp.value, done: false});
-                this.save(); 
-                this.renderDetails(); // Agora mantém aberto por causa do openDetailId
+                this.save(); this.renderDetails();
             },
 
             togStep: function(id, i) {
                 const t = this.tasks.find(x => x.id === id);
                 t.checklist[i].done = !t.checklist[i].done;
-                this.save(); 
-                this.renderDetails();
+                this.save(); this.renderDetails();
             },
 
             upNotes: function(id, v) { this.tasks.find(t => t.id === id).notes = v; this.save(); },
@@ -345,21 +343,11 @@
                         <div class="acc-head" onclick="this.parentElement.classList.toggle('open')">✅ ${t.name}</div>
                         <div class="acc-body">
                             <div style="font-size:0.75rem; margin-bottom:10px; line-height:1.4">
-                                <b>Histórico Completo:</b><br>
-                                • Pedido: ${t.dateC}<br>
-                                • Início: ${t.dateS || '---'}<br>
-                                • Validação: ${t.dateV || '---'}<br>
-                                • Finalizado: ${t.dateF || '---'}
+                                <b>Histórico:</b> Pedido: ${t.dateC} | Fim: ${t.dateF}
                             </div>
-                            <div style="margin-bottom:10px">
-                                <b>Etapas Realizadas:</b><br>
-                                ${t.checklist.length > 0 ? this.renderSteps(t) : '<small>Nenhuma etapa registrada.</small>'}
-                            </div>
-                            <div style="background:rgba(0,0,0,0.05);padding:10px;margin:10px 0;border-radius:5px;font-size:0.8rem">
-                                <b>Notas Finais:</b><br>${t.notes || 'Sem notas.'}
-                            </div>
+                            <div style="margin-bottom:10px">${this.renderSteps(t)}</div>
                             <button class="btn-primary" style="background:#e67e22" onclick="app.resetTask('${t.id}')">Reiniciar Fluxo</button>
-                            <button class="btn-primary" style="background:#e74c3c;margin-top:5px" onclick="app.delTask('${t.id}')">Excluir Permanente</button>
+                            <button class="btn-primary" style="background:#e74c3c;margin-top:5px" onclick="app.delTask('${t.id}')">Excluir</button>
                         </div>
                     `;
                     cont.appendChild(div);
@@ -373,7 +361,7 @@
             },
 
             delTask: function(id) {
-                if(confirm('Excluir permanentemente?')) {
+                if(confirm('Excluir?')) {
                     this.tasks = this.tasks.filter(t => t.id !== id);
                     this.save(); this.render();
                 }
