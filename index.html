@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Pro - Gerenciador de Atividades</title>
+    <style>
+        :root {
+            --primary-bg: #f4f7f6;
+            --sidebar-bg: #2c3e50;
+            --sidebar-hover: #34495e;
+            --accent-color: #3498db;
+            --text-dark: #2d3436;
+            --card-bg: #ffffff;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 70px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--primary-bg);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR RECOLHÍVEL --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 15px 0;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 0 20px 30px 20px;
+            justify-content: space-between;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            padding: 0 0 30px 0;
+            justify-content: center;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed h2 {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            padding: 15px 25px;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .sidebar.collapsed .nav-btn {
+            padding: 15px 0;
+            justify-content: center;
+        }
+
+        .nav-btn span {
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .nav-btn span {
+            display: none;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--sidebar-hover);
+            color: white;
+        }
+
+        .nav-icon { font-size: 1.2rem; min-width: 24px; text-align: center; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- FORMULÁRIO --- */
+        .task-form {
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
+        .form-group label { font-size: 0.85rem; font-weight: bold; color: #636e72; }
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #dfe6e9;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .btn-add {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            height: 40px;
+        }
+
+        /* --- KANBAN BOARD --- */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .column {
+            background-color: #ebedef;
+            border-radius: var(--border-radius);
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 15px;
+        }
+
+        .column-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        .btn-settings { background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.6; }
+
+        .card-container { flex: 1; padding: 10px; min-height: 100px; }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--card-bg);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: grab;
+            position: relative;
+            border-left: 5px solid var(--accent-color);
+            color: #2d3436 !important; /* Garante visibilidade do texto */
+        }
+
+        .card h4 { margin-bottom: 5px; font-size: 0.95rem; color: #2d3436; }
+        .card p { font-size: 0.8rem; color: #636e72; margin-bottom: 10px; }
+
+        .card-footer { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .badge { font-size: 0.65rem; padding: 2px 6px; background: #dfe6e9; border-radius: 10px; color: #2d3436; }
+
+        .btn-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* --- LIST VIEW --- */
+        .accordion-item { background: white; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 10px; }
+        .accordion-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; color: white; }
+        .accordion-body { padding: 0; max-height: 0; transition: max-height 0.3s ease-out; background: #fcfcfc; }
+        .accordion-item.open .accordion-body { padding: 20px; max-height: 500px; border-top: 1px solid #eee; }
+        .details-area { width: 100%; height: 100px; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal { background: white; padding: 25px; border-radius: var(--border-radius); width: 350px; }
+        .modal-field { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>KanbanPro</h2>
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        </div>
+        
+        <nav>
+            <button class="nav-btn active" onclick="switchView('kanban')">
+                <div class="nav-icon">📋</div>
+                <span>Quadro Kanban</span>
+            </button>
+            <button class="nav-btn" onclick="switchView('list')">
+                <div class="nav-icon">📝</div>
+                <span>Detalhes em Lista</span>
+            </button>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <!-- VIEW 1: KANBAN -->
+        <section id="kanban-view" class="view-section active">
+            <form class="task-form" id="taskForm">
+                <div class="form-group">
+                    <label>Nome da Atividade</label>
+                    <input type="text" id="taskName" placeholder="O que precisa ser feito?" required>
+                </div>
+                <div class="form-group">
+                    <label>Solicitante</label>
+                    <input type="text" id="taskRequester" placeholder="Quem solicitou?" required>
+                </div>
+                <button type="submit" class="btn-add">Adicionar +</button>
+            </form>
+
+            <div class="kanban-board">
+                <div class="column" data-status="Espera" id="col-Espera">
+                    <div class="column-header"><span>📋 Espera</span><button class="btn-settings" onclick="openSettings('Espera')">⚙️</button></div>
+                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                </div>
+                <div class="column" data-status="Em Andamento" id="col-EmAndamento">
+                    <div class="column-header"><span>⏳ Em Andamento</span><button class="btn-settings" onclick="openSettings('EmAndamento')">⚙️</button></div>
+                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                </div>
+                <div class="column" data-status="Validação" id="col-Validação">
+                    <div class="column-header"><span>👁️ Validação</span><button class="btn-settings" onclick="openSettings('Validação')">⚙️</button></div>
+                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                </div>
+                <div class="column" data-status="Concluído" id="col-Concluído">
+                    <div class="column-header"><span>✅ Concluído</span><button class="btn-settings" onclick="openSettings('Concluído')">⚙️</button></div>
+                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: LISTA -->
+        <section id="list-view" class="view-section">
+            <div id="accordionList"></div>
+        </section>
+    </main>
+
+    <!-- MODAL CONFIGURAÇÃO -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3 id="modalTitle">Configurar Coluna</h3>
+            <div class="modal-field"><label>Cor de Fundo</label><input type="color" id="confBg"></div>
+            <div class="modal-field"><label>Cor do Título</label><input type="color" id="confText"></div>
+            <div class="modal-field">
+                <label>Fonte</label>
+                <select id="confFont">
+                    <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeSettings()" style="background:#95a5a6; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Cancelar</button>
+                <button class="btn-save" onclick="saveSettings()" style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ESTADO E PERSISTÊNCIA ---
+        let tasks = JSON.parse(localStorage.getItem('kanban_tasks')) || [];
+        let settings = JSON.parse(localStorage.getItem('kanban_settings')) || {
+            'Espera': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" },
+            'EmAndamento': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" },
+            'Validação': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" },
+            'Concluído': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" }
+        };
+
+        // --- SIDEBAR TOGGLE ---
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        // --- NAVEGAÇÃO ---
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`${view}-view`).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(view === 'list') renderList();
+            if(view === 'kanban') renderKanban();
+        }
+
+        // --- TAREFAS ---
+        document.getElementById('taskForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newTask = {
+                id: 'task-' + Date.now(),
+                name: document.getElementById('taskName').value,
+                requester: document.getElementById('taskRequester').value,
+                status: 'Espera',
+                notes: '',
+                dates: { created: new Date().toLocaleString('pt-BR'), started: null, validated: null, finished: null }
+            };
+            tasks.push(newTask);
+            saveData();
+            renderKanban();
+            e.target.reset();
+        });
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveData();
+            renderKanban();
+        }
+
+        function saveData() { localStorage.setItem('kanban_tasks', JSON.stringify(tasks)); }
+
+        // --- RENDER KANBAN ---
+        function renderKanban() {
+            document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
+            tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.draggable = true;
+                card.id = task.id;
+                card.ondragstart = (e) => e.dataTransfer.setData("text", e.target.id);
+                card.innerHTML = `
+                    <button class="btn-delete" onclick="deleteTask('${task.id}')">✕</button>
+                    <h4>${task.name}</h4>
+                    <p>👤 ${task.requester}</p>
+                    <div class="card-footer">
+                        <span class="badge">Criado: ${task.dates.created}</span>
+                        ${task.dates.started ? `<span class="badge">Início: ${task.dates.started}</span>` : ''}
+                        ${task.dates.validated ? `<span class="badge">Val: ${task.dates.validated}</span>` : ''}
+                        ${task.dates.finished ? `<span class="badge">Fim: ${task.dates.finished}</span>` : ''}
+                    </div>
+                `;
+                const colId = `col-${task.status.replace(/\s/g, '')}`;
+                document.querySelector(`#${colId} .card-container`).appendChild(card);
+            });
+        }
+
+        // --- DRAG & DROP ---
+        function allowDrop(e) { e.preventDefault(); }
+        function drop(e) {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData("text");
+            const column = e.target.closest('.column');
+            if (column) {
+                const newStatus = column.dataset.status;
+                const task = tasks.find(t => t.id === taskId);
+                const now = new Date().toLocaleString('pt-BR');
+                if (newStatus === 'Em Andamento' && !task.dates.started) task.dates.started = now;
+                if (newStatus === 'Validação') task.dates.validated = now;
+                if (newStatus === 'Concluído') task.dates.finished = now;
+                task.status = newStatus;
+                saveData();
+                renderKanban();
+            }
+        }
+
+        // --- LISTA ---
+        function renderList() {
+            const container = document.getElementById('accordionList');
+            container.innerHTML = '';
+            tasks.forEach(task => {
+                const item = document.createElement('div');
+                item.className = 'accordion-item';
+                item.innerHTML = `
+                    <div class="accordion-header" onclick="this.parentElement.classList.toggle('open')">
+                        <strong>${task.name}</strong>
+                        <span class="status-pill" style="background:#3498db">${task.status}</span>
+                    </div>
+                    <div class="accordion-body">
+                        <textarea class="details-area" id="note-${task.id}">${task.notes || ''}</textarea>
+                        <button onclick="saveNotes('${task.id}')" style="background:#27ae60; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Salvar</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function saveNotes(id) {
+            tasks.find(t => t.id === id).notes = document.getElementById(`note-${id}`).value;
+            saveData();
+            alert('Salvo!');
+        }
+
+        // --- SETTINGS ---
+        let currentEditingCol = '';
+        function openSettings(colId) {
+            currentEditingCol = colId;
+            const config = settings[colId];
+            document.getElementById('confBg').value = config.bg;
+            document.getElementById('confText').value = config.color;
+            document.getElementById('confFont').value = config.font;
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+        function closeSettings() { document.getElementById('modalOverlay').style.display = 'none'; }
+        function saveSettings() {
+            settings[currentEditingCol] = {
+                bg: document.getElementById('confBg').value,
+                color: document.getElementById('confText').value,
+                font: document.getElementById('confFont').value
+            };
+            localStorage.setItem('kanban_settings', JSON.stringify(settings));
+            applyAllSettings();
+            closeSettings();
+        }
+        function applyAllSettings() {
+            Object.keys(settings).forEach(colId => {
+                const el = document.getElementById(`col-${colId.replace(/\s/g, '')}`);
+                if(el) {
+                    el.style.backgroundColor = settings[colId].bg;
+                    el.querySelector('.column-header').style.color = settings[colId].color;
+                    el.style.fontFamily = settings[colId].font;
+                }
+            });
+        }
+
+        // Início
+        renderKanban();
+        applyAllSettings();
+    </script>
+</body>
+</html>
