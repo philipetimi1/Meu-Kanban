@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kanban Pro Mobile</title>
+    <title>Kanban Pro Elite</title>
     <style>
         :root {
             --bg-body: #f4f7f6;
@@ -36,7 +36,7 @@
             overflow: hidden;
         }
 
-        /* --- SIDEBAR --- */
+        /* --- SIDEBAR (INICIA RECOLHIDA) --- */
         .sidebar {
             width: 70px;
             background-color: var(--bg-sidebar);
@@ -45,20 +45,27 @@
             align-items: center;
             padding: 20px 0;
             flex-shrink: 0;
-            transition: width 0.3s;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
         }
         .sidebar.expanded { width: 200px; align-items: flex-start; }
+        
         .nav-btn {
             background: none; border: none; color: #bdc3c7; padding: 20px;
             cursor: pointer; width: 100%; display: flex; align-items: center; gap: 15px;
+            transition: 0.2s;
         }
         .nav-btn.active { color: white; background: rgba(255,255,255,0.1); }
-        .sidebar:not(.expanded) span { display: none; }
-        .sidebar.expanded span { display: inline; font-weight: bold; }
+        
+        .sidebar span { 
+            display: none; 
+            white-space: nowrap;
+            font-weight: 600;
+        }
+        .sidebar.expanded span { display: inline; }
 
         /* --- CONTEÚDO --- */
-        .main-content { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 20px; }
-        
+        .main-content { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
         .view-section { display: none; }
         .view-section.active { display: block; }
 
@@ -72,67 +79,70 @@
         }
         .task-form input {
             width: 100%; padding: 12px; margin-bottom: 10px;
-            border: 1px solid #ddd; border-radius: 8px;
+            border: 1px solid var(--border-color, #ddd); border-radius: 8px;
             background: var(--bg-body); color: var(--text-main); font-size: 16px;
         }
         .btn-add {
             width: 100%; padding: 12px; background: #27ae60;
-            color: white; border: none; border-radius: 8px; font-weight: bold;
+            color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
 
         /* --- COLUNAS KANBAN --- */
-        .kanban-board { display: flex; flex-direction: column; gap: 15px; }
+        .kanban-board { display: flex; flex-direction: column; gap: 12px; }
         
         .column {
             background: var(--bg-column);
             border-radius: 12px;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: background 0.3s;
         }
 
         .column-header {
-            padding: 15px;
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: rgba(0,0,0,0.03);
         }
 
-        .column-title { font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        
-        .column-actions { display: flex; align-items: center; gap: 12px; }
+        .column-title { font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .column-actions { display: flex; align-items: center; gap: 10px; }
 
         .btn-icon {
             background: none; border: none; cursor: pointer;
-            font-size: 1.2rem; color: var(--text-main); opacity: 0.6;
-            padding: 5px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: var(--text-main); opacity: 0.6;
+            padding: 5px; display: flex; align-items: center;
         }
 
-        /* ESTADO RECOLHIDO */
-        .column.collapsed .card-container {
-            display: none;
-        }
-        .column.collapsed {
-            background: var(--bg-card);
-            border: 1px solid var(--bg-column);
-        }
+        /* ESTADO RECOLHIDO DA COLUNA */
+        .column.collapsed .card-container { display: none; }
+        .column.collapsed { background: var(--bg-card); border: 1px solid var(--bg-column); }
 
-        .card-container { padding: 10px; min-height: 20px; }
+        .card-container { padding: 10px; min-height: 10px; }
 
         /* --- CARDS --- */
         .card {
             background: var(--bg-card);
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
             margin-bottom: 10px;
             box-shadow: var(--shadow);
             border-left: 4px solid var(--accent-color);
             position: relative;
         }
-        .card h4 { font-size: 1rem; margin-bottom: 5px; }
-        .card p { font-size: 0.85rem; color: var(--text-muted); }
-        .card .date { font-size: 0.7rem; margin-top: 8px; display: block; opacity: 0.7; }
-        .btn-del { position: absolute; right: 10px; top: 10px; color: #e74c3c; border: none; background: none; }
+        .card h4 { font-size: 0.95rem; margin-bottom: 3px; padding-right: 20px; }
+        .card p { font-size: 0.8rem; color: var(--text-muted); }
+        
+        .date-group { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+        .date-badge { font-size: 0.65rem; opacity: 0.8; color: var(--text-muted); }
+
+        .btn-del { position: absolute; right: 8px; top: 8px; color: #e74c3c; border: none; background: none; font-size: 1.1rem; }
+
+        .status-select {
+            width: 100%; margin-top: 10px; padding: 8px; 
+            border-radius: 6px; border: 1px solid #ddd;
+            background: var(--bg-body); color: var(--text-main); font-size: 0.8rem;
+        }
 
         /* --- MODAL --- */
         .modal-overlay {
@@ -140,23 +150,29 @@
             background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000;
         }
         .modal { background: var(--bg-card); padding: 20px; border-radius: 15px; width: 85%; max-width: 300px; }
+
+        /* --- LIST VIEW --- */
+        .accordion-item { background: var(--bg-card); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+        .accordion-header { padding: 15px; display: flex; justify-content: space-between; font-size: 0.9rem; }
+        .accordion-body { padding: 0; max-height: 0; transition: 0.3s; background: var(--bg-body); overflow: hidden; }
+        .accordion-item.open .accordion-body { padding: 15px; max-height: 400px; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar" id="sidebar">
-        <button class="nav-btn" onclick="toggleSidebar()">☰</button>
-        <button class="nav-btn active" onclick="switchView('kanban')">📋 <span>Quadro</span></button>
-        <button class="nav-btn" onclick="switchView('list')">📝 <span>Lista</span></button>
+        <button class="nav-btn" onclick="toggleSidebar()" style="color: white;">☰</button>
+        <button class="nav-btn active" id="nav-kanban" onclick="switchView('kanban')">📋 <span>Quadro</span></button>
+        <button class="nav-btn" id="nav-list" onclick="switchView('list')">📝 <span>Lista</span></button>
         <button class="nav-btn" onclick="toggleTheme()" style="margin-top: auto;">🌙 <span>Tema</span></button>
     </aside>
 
     <main class="main-content">
         <section id="kanban-view" class="view-section active">
             <form class="task-form" id="taskForm">
-                <input type="text" id="taskName" placeholder="O que fazer?" required>
-                <input type="text" id="taskReq" placeholder="Quem solicitou?" required>
-                <button type="submit" class="btn-add">Adicionar +</button>
+                <input type="text" id="taskName" placeholder="Nome da Atividade" required>
+                <input type="text" id="taskReq" placeholder="Solicitante" required>
+                <button type="submit" class="btn-add">Adicionar Atividade +</button>
             </form>
 
             <div class="kanban-board">
@@ -184,6 +200,18 @@
                     <div class="card-container"></div>
                 </div>
 
+                <!-- COLUNA VALIDAÇÃO -->
+                <div class="column" id="col-Validacao">
+                    <div class="column-header">
+                        <div class="column-title">👁️ Validação</div>
+                        <div class="column-actions">
+                            <button class="btn-icon" onclick="openSettings('Validacao')">⚙️</button>
+                            <button class="btn-icon toggle-btn" onclick="toggleColumn('Validacao')">▲</button>
+                        </div>
+                    </div>
+                    <div class="card-container"></div>
+                </div>
+
                 <!-- COLUNA CONCLUÍDO -->
                 <div class="column" id="col-Concluido">
                     <div class="column-header">
@@ -203,17 +231,20 @@
         </section>
     </main>
 
+    <!-- MODAL CONFIG -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
-            <h3 style="margin-bottom:15px">Cor da Coluna</h3>
-            <input type="color" id="confBg" style="width:100%; height:50px; border-radius:8px; border:none; margin-bottom:15px;">
-            <button class="btn-add" onclick="saveSettings()">Salvar</button>
-            <button onclick="closeSettings()" style="width:100%; margin-top:10px; background:none; border:none; color:var(--text-muted)">Cancelar</button>
+            <h3 style="margin-bottom:15px">Personalizar Coluna</h3>
+            <label style="font-size: 0.7rem; font-weight: bold;">COR DE FUNDO</label>
+            <input type="color" id="confBg" style="width:100%; height:50px; border-radius:8px; border:none; margin-bottom:15px; cursor: pointer;">
+            <button class="btn-add" onclick="saveSettings()">Salvar Alteração</button>
+            <button onclick="closeSettings()" style="width:100%; margin-top:10px; background:none; border:none; color:var(--text-muted); cursor: pointer;">Cancelar</button>
         </div>
     </div>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('k_tasks')) || [];
+        // --- ESTADO INICIAL ---
+        let tasks = JSON.parse(localStorage.getItem('k_tasks_v2')) || [];
         let theme = localStorage.getItem('k_theme') || 'light';
         let colSettings = JSON.parse(localStorage.getItem('k_col_settings')) || {};
         let collapsedCols = JSON.parse(localStorage.getItem('k_collapsed')) || [];
@@ -222,7 +253,8 @@
             if (theme === 'dark') document.body.classList.add('dark-theme');
             renderKanban();
             applyColSettings();
-            // Aplica o estado de recolhido salvo
+            
+            // Aplica estado de colunas recolhidas
             collapsedCols.forEach(id => {
                 const el = document.getElementById('col-' + id);
                 if(el) {
@@ -232,7 +264,10 @@
             });
         }
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('expanded'); }
+        // --- NAVEGAÇÃO ---
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('expanded'); 
+        }
 
         function toggleTheme() {
             document.body.classList.toggle('dark-theme');
@@ -240,12 +275,19 @@
             localStorage.setItem('k_theme', theme);
         }
 
-        // FUNÇÃO DE RECOLHER COLUNA
+        function switchView(v) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(v + '-view').classList.add('active');
+            document.getElementById('nav-' + v).classList.add('active');
+            if(v === 'list') renderList();
+        }
+
+        // --- COLUNAS ---
         function toggleColumn(id) {
             const col = document.getElementById('col-' + id);
             const btn = col.querySelector('.toggle-btn');
             const isCollapsed = col.classList.toggle('collapsed');
-            
             btn.innerText = isCollapsed ? '▼' : '▲';
 
             if (isCollapsed) {
@@ -256,14 +298,20 @@
             localStorage.setItem('k_collapsed', JSON.stringify(collapsedCols));
         }
 
+        // --- LÓGICA DE TAREFAS ---
         document.getElementById('taskForm').onsubmit = function(e) {
             e.preventDefault();
+            const now = new Date().toLocaleString('pt-BR');
             const t = {
                 id: 't' + Date.now(),
                 name: document.getElementById('taskName').value,
                 req: document.getElementById('taskReq').value,
                 status: 'Espera',
-                date: new Date().toLocaleString('pt-BR')
+                notes: '',
+                dateCreated: now,
+                dateStarted: null,
+                dateValidated: null,
+                dateFinished: null
             };
             tasks.push(t);
             save();
@@ -271,7 +319,27 @@
             this.reset();
         };
 
-        function save() { localStorage.setItem('k_tasks', JSON.stringify(tasks)); }
+        function moveTask(id, newStatus) {
+            const task = tasks.find(t => t.id === id);
+            const now = new Date().toLocaleString('pt-BR');
+
+            // Lógica de Datas solicitada
+            if (newStatus === 'Andamento' && !task.dateStarted) {
+                task.dateStarted = now;
+            }
+            if (newStatus === 'Validacao') {
+                task.dateValidated = now; // Sempre sobrescreve
+            }
+            if (newStatus === 'Concluido' && !task.dateFinished) {
+                task.dateFinished = now;
+            }
+
+            task.status = newStatus;
+            save();
+            renderKanban();
+        }
+
+        function save() { localStorage.setItem('k_tasks_v2', JSON.stringify(tasks)); }
 
         function renderKanban() {
             document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
@@ -282,11 +350,17 @@
                     <button class="btn-del" onclick="delTask('${t.id}')">✕</button>
                     <h4>${t.name}</h4>
                     <p>👤 ${t.req}</p>
-                    <span class="date">Criado: ${t.date}</span>
-                    <select onchange="moveTask('${t.id}', this.value)" style="width:100%; margin-top:10px; padding:5px; border-radius:5px;">
-                        <option value="Espera" ${t.status=='Espera'?'selected':''}>Espera</option>
-                        <option value="Andamento" ${t.status=='Andamento'?'selected':''}>Andamento</option>
-                        <option value="Concluido" ${t.status=='Concluido'?'selected':''}>Concluído</option>
+                    <div class="date-group">
+                        <span class="date-badge">📅 Pedido: ${t.dateCreated}</span>
+                        ${t.dateStarted ? `<span class="date-badge">⏳ Início: ${t.dateStarted}</span>` : ''}
+                        ${t.dateValidated ? `<span class="date-badge">👁️ Validação: ${t.dateValidated}</span>` : ''}
+                        ${t.dateFinished ? `<span class="date-badge">✅ Fim: ${t.dateFinished}</span>` : ''}
+                    </div>
+                    <select class="status-select" onchange="moveTask('${t.id}', this.value)">
+                        <option value="Espera" ${t.status=='Espera'?'selected':''}>📋 Espera</option>
+                        <option value="Andamento" ${t.status=='Andamento'?'selected':''}>⏳ Andamento</option>
+                        <option value="Validacao" ${t.status=='Validacao'?'selected':''}>👁️ Validação</option>
+                        <option value="Concluido" ${t.status=='Concluido'?'selected':''}>✅ Concluído</option>
                     </select>
                 `;
                 const container = document.querySelector(`#col-${t.status} .card-container`);
@@ -294,26 +368,49 @@
             });
         }
 
-        function moveTask(id, newStatus) {
-            const task = tasks.find(t => t.id === id);
-            task.status = newStatus;
-            save();
-            renderKanban();
-        }
-
         function delTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
+            if(confirm('Excluir esta atividade?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                save();
+                renderKanban();
+            }
+        }
+
+        // --- LISTA DETALHADA ---
+        function renderList() {
+            const cont = document.getElementById('accordionList');
+            cont.innerHTML = '';
+            tasks.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'accordion-item';
+                item.innerHTML = `
+                    <div class="accordion-header" onclick="this.parentElement.classList.toggle('open')">
+                        <span><b>${t.name}</b> <small>(${t.req})</small></span>
+                        <span style="font-size:0.7rem; background:var(--accent-color); color:white; padding:2px 8px; border-radius:10px;">${t.status}</span>
+                    </div>
+                    <div class="accordion-body">
+                        <div style="font-size:0.75rem; margin-bottom:10px; line-height:1.4">
+                            <b>Histórico:</b><br>
+                            • Criado: ${t.dateCreated}<br>
+                            • Início: ${t.dateStarted || '---'}<br>
+                            • Validação: ${t.dateValidated || '---'}<br>
+                            • Finalizado: ${t.dateFinished || '---'}
+                        </div>
+                        <textarea style="width:100%; height:80px; padding:10px; border-radius:8px; border:1px solid #ddd; background:var(--bg-body); color:var(--text-main);" id="n-${t.id}" placeholder="Anotações...">${t.notes}</textarea>
+                        <button class="btn-add" style="margin-top:10px; padding:8px;" onclick="saveNote('${t.id}')">Salvar Anotações</button>
+                    </div>
+                `;
+                cont.appendChild(item);
+            });
+        }
+
+        function saveNote(id) {
+            tasks.find(t => t.id === id).notes = document.getElementById('n-'+id).value;
             save();
-            renderKanban();
+            alert('Anotações salvas!');
         }
 
-        function switchView(v) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(v + '-view').classList.add('active');
-            if(v === 'list') renderList();
-        }
-
+        // --- CONFIGURAÇÕES DE COLUNA ---
         let editingCol = '';
         function openSettings(id) {
             editingCol = id;
