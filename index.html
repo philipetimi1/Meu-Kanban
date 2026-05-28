@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kanban Pro - Sistema Completo</title>
+    <title>Kanban Pro - Gestão Total</title>
     <style>
         :root {
             --bg-body: #f0f2f5;
@@ -45,7 +45,7 @@
         /* FORMULÁRIO */
         .card-form { background: var(--bg-card); padding: 15px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; }
         .card-form input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 16px; background: var(--bg-body); color: var(--text-main); }
-        .btn-primary { width: 100%; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .btn-primary { width: 100%; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         /* KANBAN */
         .board { display: flex; flex-direction: column; gap: 15px; }
@@ -67,8 +67,8 @@
         /* ACORDEÃO (DETALHES E CONCLUÍDAS) */
         .acc-item { background: var(--bg-card); border-radius: 10px; margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
         .acc-head { padding: 15px; display: flex; justify-content: space-between; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
-        .acc-body { padding: 0; max-height: 0; transition: 0.3s ease-in-out; background: rgba(0,0,0,0.02); overflow: hidden; }
-        .acc-item.open .acc-body { padding: 15px; max-height: 1000px; overflow-y: auto; }
+        .acc-body { padding: 0; max-height: 0; transition: max-height 0.3s ease-in-out; background: rgba(0,0,0,0.02); overflow: hidden; }
+        .acc-item.open .acc-body { padding: 15px; max-height: 1200px; overflow-y: auto; }
 
         /* CHECKLIST */
         .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -134,13 +134,14 @@
             tasks: [],
             theme: 'light',
             collapsed: [],
+            openDetailId: null, // Memoriza qual acordeão está aberto
             ghost: null,
 
             init: function() {
                 try {
-                    this.tasks = JSON.parse(localStorage.getItem('kanban_v7_tasks')) || [];
-                    this.theme = localStorage.getItem('kanban_v7_theme') || 'light';
-                    this.collapsed = JSON.parse(localStorage.getItem('kanban_v7_cols')) || [];
+                    this.tasks = JSON.parse(localStorage.getItem('kanban_v8_tasks')) || [];
+                    this.theme = localStorage.getItem('kanban_v8_theme') || 'light';
+                    this.collapsed = JSON.parse(localStorage.getItem('kanban_v8_cols')) || [];
                 } catch(e) { this.tasks = []; }
 
                 if(this.theme === 'dark') document.body.classList.add('dark-theme');
@@ -148,9 +149,9 @@
             },
 
             save: function() {
-                localStorage.setItem('kanban_v7_tasks', JSON.stringify(this.tasks));
-                localStorage.setItem('kanban_v7_theme', this.theme);
-                localStorage.setItem('kanban_v7_cols', JSON.stringify(this.collapsed));
+                localStorage.setItem('kanban_v8_tasks', JSON.stringify(this.tasks));
+                localStorage.setItem('kanban_v8_theme', this.theme);
+                localStorage.setItem('kanban_v8_cols', JSON.stringify(this.collapsed));
             },
 
             view: function(v) {
@@ -273,23 +274,22 @@
             moveLogic: function(id, status) {
                 const t = this.tasks.find(x => x.id === id);
                 const now = new Date().toLocaleString('pt-BR');
-                
                 if(status === 'Andamento' && !t.dateS) t.dateS = now;
-                if(status === 'Validacao') t.dateV = now; // Sobrescreve sempre
+                if(status === 'Validacao') t.dateV = now;
                 if(status === 'Concluido') { t.dateF = now; t.hidden = false; }
-                
                 t.status = status;
                 this.save(); this.render();
             },
 
+            // --- LÓGICA DE DETALHES COM MEMÓRIA DE ESTADO ---
             renderDetails: function() {
                 const cont = document.getElementById('list-details');
                 cont.innerHTML = '';
                 this.tasks.filter(t => t.status !== 'Concluido').forEach(t => {
                     const div = document.createElement('div');
-                    div.className = 'acc-item';
+                    div.className = 'acc-item' + (this.openDetailId === t.id ? ' open' : '');
                     div.innerHTML = `
-                        <div class="acc-head" onclick="this.parentElement.classList.toggle('open')">${t.name} ▾</div>
+                        <div class="acc-head" onclick="app.toggleAccordion('${t.id}')">${t.name} ▾</div>
                         <div class="acc-body">
                             <div style="display:flex;gap:5px;margin-bottom:10px">
                                 <input type="text" id="step-${t.id}" style="flex:1;padding:8px;border-radius:5px;border:1px solid #ddd;background:var(--bg-body);color:var(--text-main)" placeholder="Nova etapa...">
@@ -301,6 +301,12 @@
                     `;
                     cont.appendChild(div);
                 });
+            },
+
+            toggleAccordion: function(id) {
+                // Se clicar no que já está aberto, fecha. Se não, abre o novo.
+                this.openDetailId = (this.openDetailId === id) ? null : id;
+                this.renderDetails();
             },
 
             renderSteps: function(t) {
@@ -316,13 +322,15 @@
                 const inp = document.getElementById('step-' + id);
                 if(!inp.value) return;
                 this.tasks.find(t => t.id === id).checklist.push({text: inp.value, done: false});
-                this.save(); this.renderDetails();
+                this.save(); 
+                this.renderDetails(); // Agora mantém aberto por causa do openDetailId
             },
 
             togStep: function(id, i) {
                 const t = this.tasks.find(x => x.id === id);
                 t.checklist[i].done = !t.checklist[i].done;
-                this.save(); this.renderDetails();
+                this.save(); 
+                this.renderDetails();
             },
 
             upNotes: function(id, v) { this.tasks.find(t => t.id === id).notes = v; this.save(); },
