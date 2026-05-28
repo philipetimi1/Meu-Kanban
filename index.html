@@ -2,185 +2,92 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kanban Pro - Gerenciador de Atividades</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kanban Pro Mobile</title>
     <style>
         :root {
-            --primary-bg: #f4f7f6;
-            --sidebar-bg: #2c3e50;
-            --sidebar-hover: #34495e;
+            --bg-body: #f4f7f6;
+            --bg-sidebar: #2c3e50;
+            --bg-card: #ffffff;
+            --bg-column: #ebedef;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
             --accent-color: #3498db;
-            --text-dark: #2d3436;
-            --card-bg: #ffffff;
-            --border-radius: 8px;
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
-            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            --sidebar-width: 260px;
-            --sidebar-collapsed-width: 70px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body.dark-theme {
+            --bg-body: #121212;
+            --bg-sidebar: #000000;
+            --bg-card: #1e1e1e;
+            --bg-column: #252525;
+            --text-main: #e0e0e0;
+            --text-muted: #b0b0b0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: var(--font-main);
-            background-color: var(--primary-bg);
-            color: var(--text-dark);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             height: 100vh;
             display: flex;
             overflow: hidden;
         }
 
-        /* --- SIDEBAR RECOLHÍVEL --- */
+        /* --- SIDEBAR --- */
         .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--sidebar-bg);
-            color: white;
+            width: 70px;
+            background-color: var(--bg-sidebar);
             display: flex;
             flex-direction: column;
-            padding: 15px 0;
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            align-items: center;
+            padding: 20px 0;
             flex-shrink: 0;
-            overflow: hidden;
+            transition: width 0.3s;
         }
-
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-        }
-
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            padding: 0 20px 30px 20px;
-            justify-content: space-between;
-        }
-
-        .sidebar.collapsed .sidebar-header {
-            padding: 0 0 30px 0;
-            justify-content: center;
-        }
-
-        .sidebar h2 {
-            font-size: 1.2rem;
-            white-space: nowrap;
-            transition: opacity 0.2s;
-        }
-
-        .sidebar.collapsed h2 {
-            display: none;
-        }
-
-        .toggle-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+        .sidebar.expanded { width: 200px; align-items: flex-start; }
         .nav-btn {
-            background: none;
-            border: none;
-            color: #bdc3c7;
-            padding: 15px 25px;
-            text-align: left;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            white-space: nowrap;
-            width: 100%;
+            background: none; border: none; color: #bdc3c7; padding: 20px;
+            cursor: pointer; width: 100%; display: flex; align-items: center; gap: 15px;
         }
+        .nav-btn.active { color: white; background: rgba(255,255,255,0.1); }
+        .sidebar:not(.expanded) span { display: none; }
+        .sidebar.expanded span { display: inline; font-weight: bold; }
 
-        .sidebar.collapsed .nav-btn {
-            padding: 15px 0;
-            justify-content: center;
-        }
-
-        .nav-btn span {
-            transition: opacity 0.2s;
-        }
-
-        .sidebar.collapsed .nav-btn span {
-            display: none;
-        }
-
-        .nav-btn:hover, .nav-btn.active {
-            background-color: var(--sidebar-hover);
-            color: white;
-        }
-
-        .nav-icon { font-size: 1.2rem; min-width: 24px; text-align: center; }
-
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            padding: 20px;
-            transition: all 0.3s;
-        }
-
-        .view-section { display: none; animation: fadeIn 0.3s ease; }
+        /* --- CONTEÚDO --- */
+        .main-content { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .view-section { display: none; }
         .view-section.active { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* --- FORMULÁRIO --- */
         .task-form {
-            background: white;
-            padding: 20px;
-            border-radius: var(--border-radius);
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 12px;
             box-shadow: var(--shadow);
-            margin-bottom: 25px;
-            display: flex;
-            gap: 15px;
-            align-items: flex-end;
-            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
-
-        .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 200px; }
-        .form-group label { font-size: 0.85rem; font-weight: bold; color: #636e72; }
-        .form-group input {
-            padding: 10px;
-            border: 1px solid #dfe6e9;
-            border-radius: 4px;
-            outline: none;
+        .task-form input {
+            width: 100%; padding: 12px; margin-bottom: 10px;
+            border: 1px solid #ddd; border-radius: 8px;
+            background: var(--bg-body); color: var(--text-main); font-size: 16px;
         }
-
         .btn-add {
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            height: 40px;
+            width: 100%; padding: 12px; background: #27ae60;
+            color: white; border: none; border-radius: 8px; font-weight: bold;
         }
 
-        /* --- KANBAN BOARD --- */
-        .kanban-board {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            align-items: flex-start;
-        }
-
+        /* --- COLUNAS KANBAN --- */
+        .kanban-board { display: flex; flex-direction: column; gap: 15px; }
+        
         .column {
-            background-color: #ebedef;
-            border-radius: var(--border-radius);
-            min-height: 500px;
-            display: flex;
-            flex-direction: column;
-            padding-bottom: 15px;
+            background: var(--bg-column);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
 
         .column-header {
@@ -188,305 +95,246 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: bold;
-            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            background: rgba(0,0,0,0.03);
         }
 
-        .btn-settings { background: none; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.6; }
+        .column-title { font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        
+        .column-actions { display: flex; align-items: center; gap: 12px; }
 
-        .card-container { flex: 1; padding: 10px; min-height: 100px; }
+        .btn-icon {
+            background: none; border: none; cursor: pointer;
+            font-size: 1.2rem; color: var(--text-main); opacity: 0.6;
+            padding: 5px; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ESTADO RECOLHIDO */
+        .column.collapsed .card-container {
+            display: none;
+        }
+        .column.collapsed {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-column);
+        }
+
+        .card-container { padding: 10px; min-height: 20px; }
 
         /* --- CARDS --- */
         .card {
-            background: var(--card-bg);
-            border-radius: 6px;
+            background: var(--bg-card);
             padding: 15px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            cursor: grab;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--accent-color);
             position: relative;
-            border-left: 5px solid var(--accent-color);
-            color: #2d3436 !important; /* Garante visibilidade do texto */
         }
-
-        .card h4 { margin-bottom: 5px; font-size: 0.95rem; color: #2d3436; }
-        .card p { font-size: 0.8rem; color: #636e72; margin-bottom: 10px; }
-
-        .card-footer { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-        .badge { font-size: 0.65rem; padding: 2px 6px; background: #dfe6e9; border-radius: 10px; color: #2d3436; }
-
-        .btn-delete {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #e74c3c;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        /* --- LIST VIEW --- */
-        .accordion-item { background: white; border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 10px; }
-        .accordion-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; color: white; }
-        .accordion-body { padding: 0; max-height: 0; transition: max-height 0.3s ease-out; background: #fcfcfc; }
-        .accordion-item.open .accordion-body { padding: 20px; max-height: 500px; border-top: 1px solid #eee; }
-        .details-area { width: 100%; height: 100px; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .card h4 { font-size: 1rem; margin-bottom: 5px; }
+        .card p { font-size: 0.85rem; color: var(--text-muted); }
+        .card .date { font-size: 0.7rem; margin-top: 8px; display: block; opacity: 0.7; }
+        .btn-del { position: absolute; right: 10px; top: 10px; color: #e74c3c; border: none; background: none; }
 
         /* --- MODAL --- */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000;
         }
-        .modal { background: white; padding: 25px; border-radius: var(--border-radius); width: 350px; }
-        .modal-field { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal { background: var(--bg-card); padding: 20px; border-radius: 15px; width: 85%; max-width: 300px; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>KanbanPro</h2>
-            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-        </div>
-        
-        <nav>
-            <button class="nav-btn active" onclick="switchView('kanban')">
-                <div class="nav-icon">📋</div>
-                <span>Quadro Kanban</span>
-            </button>
-            <button class="nav-btn" onclick="switchView('list')">
-                <div class="nav-icon">📝</div>
-                <span>Detalhes em Lista</span>
-            </button>
-        </nav>
+        <button class="nav-btn" onclick="toggleSidebar()">☰</button>
+        <button class="nav-btn active" onclick="switchView('kanban')">📋 <span>Quadro</span></button>
+        <button class="nav-btn" onclick="switchView('list')">📝 <span>Lista</span></button>
+        <button class="nav-btn" onclick="toggleTheme()" style="margin-top: auto;">🌙 <span>Tema</span></button>
     </aside>
 
     <main class="main-content">
-        <!-- VIEW 1: KANBAN -->
         <section id="kanban-view" class="view-section active">
             <form class="task-form" id="taskForm">
-                <div class="form-group">
-                    <label>Nome da Atividade</label>
-                    <input type="text" id="taskName" placeholder="O que precisa ser feito?" required>
-                </div>
-                <div class="form-group">
-                    <label>Solicitante</label>
-                    <input type="text" id="taskRequester" placeholder="Quem solicitou?" required>
-                </div>
+                <input type="text" id="taskName" placeholder="O que fazer?" required>
+                <input type="text" id="taskReq" placeholder="Quem solicitou?" required>
                 <button type="submit" class="btn-add">Adicionar +</button>
             </form>
 
             <div class="kanban-board">
-                <div class="column" data-status="Espera" id="col-Espera">
-                    <div class="column-header"><span>📋 Espera</span><button class="btn-settings" onclick="openSettings('Espera')">⚙️</button></div>
-                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <!-- COLUNA ESPERA -->
+                <div class="column" id="col-Espera">
+                    <div class="column-header">
+                        <div class="column-title">📋 Espera</div>
+                        <div class="column-actions">
+                            <button class="btn-icon" onclick="openSettings('Espera')">⚙️</button>
+                            <button class="btn-icon toggle-btn" onclick="toggleColumn('Espera')">▲</button>
+                        </div>
+                    </div>
+                    <div class="card-container"></div>
                 </div>
-                <div class="column" data-status="Em Andamento" id="col-EmAndamento">
-                    <div class="column-header"><span>⏳ Em Andamento</span><button class="btn-settings" onclick="openSettings('EmAndamento')">⚙️</button></div>
-                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+
+                <!-- COLUNA ANDAMENTO -->
+                <div class="column" id="col-Andamento">
+                    <div class="column-header">
+                        <div class="column-title">⏳ Andamento</div>
+                        <div class="column-actions">
+                            <button class="btn-icon" onclick="openSettings('Andamento')">⚙️</button>
+                            <button class="btn-icon toggle-btn" onclick="toggleColumn('Andamento')">▲</button>
+                        </div>
+                    </div>
+                    <div class="card-container"></div>
                 </div>
-                <div class="column" data-status="Validação" id="col-Validação">
-                    <div class="column-header"><span>👁️ Validação</span><button class="btn-settings" onclick="openSettings('Validação')">⚙️</button></div>
-                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                </div>
-                <div class="column" data-status="Concluído" id="col-Concluído">
-                    <div class="column-header"><span>✅ Concluído</span><button class="btn-settings" onclick="openSettings('Concluído')">⚙️</button></div>
-                    <div class="card-container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+
+                <!-- COLUNA CONCLUÍDO -->
+                <div class="column" id="col-Concluido">
+                    <div class="column-header">
+                        <div class="column-title">✅ Concluído</div>
+                        <div class="column-actions">
+                            <button class="btn-icon" onclick="openSettings('Concluido')">⚙️</button>
+                            <button class="btn-icon toggle-btn" onclick="toggleColumn('Concluido')">▲</button>
+                        </div>
+                    </div>
+                    <div class="card-container"></div>
                 </div>
             </div>
         </section>
 
-        <!-- VIEW 2: LISTA -->
         <section id="list-view" class="view-section">
             <div id="accordionList"></div>
         </section>
     </main>
 
-    <!-- MODAL CONFIGURAÇÃO -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
-            <h3 id="modalTitle">Configurar Coluna</h3>
-            <div class="modal-field"><label>Cor de Fundo</label><input type="color" id="confBg"></div>
-            <div class="modal-field"><label>Cor do Título</label><input type="color" id="confText"></div>
-            <div class="modal-field">
-                <label>Fonte</label>
-                <select id="confFont">
-                    <option value="'Segoe UI', sans-serif">Segoe UI</option>
-                    <option value="Arial, sans-serif">Arial</option>
-                    <option value="'Courier New', monospace">Courier New</option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeSettings()" style="background:#95a5a6; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Cancelar</button>
-                <button class="btn-save" onclick="saveSettings()" style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Salvar</button>
-            </div>
+            <h3 style="margin-bottom:15px">Cor da Coluna</h3>
+            <input type="color" id="confBg" style="width:100%; height:50px; border-radius:8px; border:none; margin-bottom:15px;">
+            <button class="btn-add" onclick="saveSettings()">Salvar</button>
+            <button onclick="closeSettings()" style="width:100%; margin-top:10px; background:none; border:none; color:var(--text-muted)">Cancelar</button>
         </div>
     </div>
 
     <script>
-        // --- ESTADO E PERSISTÊNCIA ---
-        let tasks = JSON.parse(localStorage.getItem('kanban_tasks')) || [];
-        let settings = JSON.parse(localStorage.getItem('kanban_settings')) || {
-            'Espera': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" },
-            'EmAndamento': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" },
-            'Validação': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" },
-            'Concluído': { bg: '#ebedef', color: '#2d3436', font: "'Segoe UI', sans-serif" }
-        };
+        let tasks = JSON.parse(localStorage.getItem('k_tasks')) || [];
+        let theme = localStorage.getItem('k_theme') || 'light';
+        let colSettings = JSON.parse(localStorage.getItem('k_col_settings')) || {};
+        let collapsedCols = JSON.parse(localStorage.getItem('k_collapsed')) || [];
 
-        // --- SIDEBAR TOGGLE ---
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-        }
-
-        // --- NAVEGAÇÃO ---
-        function switchView(view) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`${view}-view`).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(view === 'list') renderList();
-            if(view === 'kanban') renderKanban();
-        }
-
-        // --- TAREFAS ---
-        document.getElementById('taskForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newTask = {
-                id: 'task-' + Date.now(),
-                name: document.getElementById('taskName').value,
-                requester: document.getElementById('taskRequester').value,
-                status: 'Espera',
-                notes: '',
-                dates: { created: new Date().toLocaleString('pt-BR'), started: null, validated: null, finished: null }
-            };
-            tasks.push(newTask);
-            saveData();
+        function init() {
+            if (theme === 'dark') document.body.classList.add('dark-theme');
             renderKanban();
-            e.target.reset();
-        });
-
-        function deleteTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            saveData();
-            renderKanban();
-        }
-
-        function saveData() { localStorage.setItem('kanban_tasks', JSON.stringify(tasks)); }
-
-        // --- RENDER KANBAN ---
-        function renderKanban() {
-            document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
-            tasks.forEach(task => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.draggable = true;
-                card.id = task.id;
-                card.ondragstart = (e) => e.dataTransfer.setData("text", e.target.id);
-                card.innerHTML = `
-                    <button class="btn-delete" onclick="deleteTask('${task.id}')">✕</button>
-                    <h4>${task.name}</h4>
-                    <p>👤 ${task.requester}</p>
-                    <div class="card-footer">
-                        <span class="badge">Criado: ${task.dates.created}</span>
-                        ${task.dates.started ? `<span class="badge">Início: ${task.dates.started}</span>` : ''}
-                        ${task.dates.validated ? `<span class="badge">Val: ${task.dates.validated}</span>` : ''}
-                        ${task.dates.finished ? `<span class="badge">Fim: ${task.dates.finished}</span>` : ''}
-                    </div>
-                `;
-                const colId = `col-${task.status.replace(/\s/g, '')}`;
-                document.querySelector(`#${colId} .card-container`).appendChild(card);
-            });
-        }
-
-        // --- DRAG & DROP ---
-        function allowDrop(e) { e.preventDefault(); }
-        function drop(e) {
-            e.preventDefault();
-            const taskId = e.dataTransfer.getData("text");
-            const column = e.target.closest('.column');
-            if (column) {
-                const newStatus = column.dataset.status;
-                const task = tasks.find(t => t.id === taskId);
-                const now = new Date().toLocaleString('pt-BR');
-                if (newStatus === 'Em Andamento' && !task.dates.started) task.dates.started = now;
-                if (newStatus === 'Validação') task.dates.validated = now;
-                if (newStatus === 'Concluído') task.dates.finished = now;
-                task.status = newStatus;
-                saveData();
-                renderKanban();
-            }
-        }
-
-        // --- LISTA ---
-        function renderList() {
-            const container = document.getElementById('accordionList');
-            container.innerHTML = '';
-            tasks.forEach(task => {
-                const item = document.createElement('div');
-                item.className = 'accordion-item';
-                item.innerHTML = `
-                    <div class="accordion-header" onclick="this.parentElement.classList.toggle('open')">
-                        <strong>${task.name}</strong>
-                        <span class="status-pill" style="background:#3498db">${task.status}</span>
-                    </div>
-                    <div class="accordion-body">
-                        <textarea class="details-area" id="note-${task.id}">${task.notes || ''}</textarea>
-                        <button onclick="saveNotes('${task.id}')" style="background:#27ae60; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Salvar</button>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        function saveNotes(id) {
-            tasks.find(t => t.id === id).notes = document.getElementById(`note-${id}`).value;
-            saveData();
-            alert('Salvo!');
-        }
-
-        // --- SETTINGS ---
-        let currentEditingCol = '';
-        function openSettings(colId) {
-            currentEditingCol = colId;
-            const config = settings[colId];
-            document.getElementById('confBg').value = config.bg;
-            document.getElementById('confText').value = config.color;
-            document.getElementById('confFont').value = config.font;
-            document.getElementById('modalOverlay').style.display = 'flex';
-        }
-        function closeSettings() { document.getElementById('modalOverlay').style.display = 'none'; }
-        function saveSettings() {
-            settings[currentEditingCol] = {
-                bg: document.getElementById('confBg').value,
-                color: document.getElementById('confText').value,
-                font: document.getElementById('confFont').value
-            };
-            localStorage.setItem('kanban_settings', JSON.stringify(settings));
-            applyAllSettings();
-            closeSettings();
-        }
-        function applyAllSettings() {
-            Object.keys(settings).forEach(colId => {
-                const el = document.getElementById(`col-${colId.replace(/\s/g, '')}`);
+            applyColSettings();
+            // Aplica o estado de recolhido salvo
+            collapsedCols.forEach(id => {
+                const el = document.getElementById('col-' + id);
                 if(el) {
-                    el.style.backgroundColor = settings[colId].bg;
-                    el.querySelector('.column-header').style.color = settings[colId].color;
-                    el.style.fontFamily = settings[colId].font;
+                    el.classList.add('collapsed');
+                    el.querySelector('.toggle-btn').innerText = '▼';
                 }
             });
         }
 
-        // Início
-        renderKanban();
-        applyAllSettings();
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('expanded'); }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            theme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+            localStorage.setItem('k_theme', theme);
+        }
+
+        // FUNÇÃO DE RECOLHER COLUNA
+        function toggleColumn(id) {
+            const col = document.getElementById('col-' + id);
+            const btn = col.querySelector('.toggle-btn');
+            const isCollapsed = col.classList.toggle('collapsed');
+            
+            btn.innerText = isCollapsed ? '▼' : '▲';
+
+            if (isCollapsed) {
+                if (!collapsedCols.includes(id)) collapsedCols.push(id);
+            } else {
+                collapsedCols = collapsedCols.filter(c => c !== id);
+            }
+            localStorage.setItem('k_collapsed', JSON.stringify(collapsedCols));
+        }
+
+        document.getElementById('taskForm').onsubmit = function(e) {
+            e.preventDefault();
+            const t = {
+                id: 't' + Date.now(),
+                name: document.getElementById('taskName').value,
+                req: document.getElementById('taskReq').value,
+                status: 'Espera',
+                date: new Date().toLocaleString('pt-BR')
+            };
+            tasks.push(t);
+            save();
+            renderKanban();
+            this.reset();
+        };
+
+        function save() { localStorage.setItem('k_tasks', JSON.stringify(tasks)); }
+
+        function renderKanban() {
+            document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
+            tasks.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <button class="btn-del" onclick="delTask('${t.id}')">✕</button>
+                    <h4>${t.name}</h4>
+                    <p>👤 ${t.req}</p>
+                    <span class="date">Criado: ${t.date}</span>
+                    <select onchange="moveTask('${t.id}', this.value)" style="width:100%; margin-top:10px; padding:5px; border-radius:5px;">
+                        <option value="Espera" ${t.status=='Espera'?'selected':''}>Espera</option>
+                        <option value="Andamento" ${t.status=='Andamento'?'selected':''}>Andamento</option>
+                        <option value="Concluido" ${t.status=='Concluido'?'selected':''}>Concluído</option>
+                    </select>
+                `;
+                const container = document.querySelector(`#col-${t.status} .card-container`);
+                if (container) container.appendChild(card);
+            });
+        }
+
+        function moveTask(id, newStatus) {
+            const task = tasks.find(t => t.id === id);
+            task.status = newStatus;
+            save();
+            renderKanban();
+        }
+
+        function delTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            save();
+            renderKanban();
+        }
+
+        function switchView(v) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(v + '-view').classList.add('active');
+            if(v === 'list') renderList();
+        }
+
+        let editingCol = '';
+        function openSettings(id) {
+            editingCol = id;
+            document.getElementById('confBg').value = colSettings[id] || '#ebedef';
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+        function closeSettings() { document.getElementById('modalOverlay').style.display = 'none'; }
+        function saveSettings() {
+            colSettings[editingCol] = document.getElementById('confBg').value;
+            localStorage.setItem('k_col_settings', JSON.stringify(colSettings));
+            applyColSettings();
+            closeSettings();
+        }
+        function applyColSettings() {
+            Object.keys(colSettings).forEach(id => {
+                const el = document.getElementById('col-' + id);
+                if (el) el.style.backgroundColor = colSettings[id];
+            });
+        }
+
+        init();
     </script>
 </body>
 </html>
